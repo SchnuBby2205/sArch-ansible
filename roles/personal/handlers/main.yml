@@ -1,0 +1,9 @@
+- name: GRUB-Config neu erzeugen
+  become: true
+  ansible.builtin.command: grub-mkconfig -o /boot/grub/grub.cfg
+  changed_when: true
+
+- name: Swap aktivieren
+  become: true
+  ansible.builtin.command: swapon -a
+  changed_when: true

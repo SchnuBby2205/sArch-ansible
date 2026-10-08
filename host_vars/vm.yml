@@ -1,0 +1,16 @@
+# ============================================================
+#  Test-VM: Platte /dev/vda, keine Zusatzlaufwerke, kein Backup, kein Firefox-Profil.
+# ============================================================
+sarch_gpu: none                   # VM: keine echten GPU-Treiber
+
+sarch_personal:
+  swap: /dev/vda2
+  mounts: []                      # kein /programmieren, kein /spiele
+  sddm_autologin: true
+  sddm_session: hyprland
+  grub_timeout: 0
+  links: []                       # kein Backup-Laufwerk
+  firefox:
+    profile: null                 # Firefox bleibt beim Standardprofil
+    name: sarch.default-release
+    install_hash: []

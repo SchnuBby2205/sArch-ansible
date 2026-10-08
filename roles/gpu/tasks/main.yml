@@ -1,0 +1,5 @@
+- name: "GPU-Treiber installieren ({{ sarch_gpu }})"
+  become: true
+  community.general.pacman:
+    name: "{{ sarch_gpu_packages[sarch_gpu] }}"
+    state: present

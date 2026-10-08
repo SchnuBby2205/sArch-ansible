@@ -1,0 +1,4 @@
+collections:
+  - name: community.general   # pacman
+  - name: ansible.posix       # mount (nur Rolle "personal")
+  - name: kewlfft.aur         # AUR-Pakete via yay

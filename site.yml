@@ -1,0 +1,34 @@
+# sArch – Post-Install per Ansible
+# Start:  ./sarch.sh pc   bzw.   ./sarch.sh vm
+- name: sArch Desktop einrichten
+  hosts: sarch
+  connection: local
+  gather_facts: true
+
+  pre_tasks:
+    - name: Genau einen Rechner auswählen (pc oder vm)
+      ansible.builtin.assert:
+        that: ansible_play_hosts_all | length == 1
+        fail_msg: "Bitte über ./sarch.sh pc oder ./sarch.sh vm starten (bzw. -l pc / -l vm)."
+      tags: always
+
+    - name: Nicht als root laufen lassen
+      ansible.builtin.assert:
+        that: ansible_user_id != 'root'
+        fail_msg: "Playbook als normaler User starten (sudo wird per -K abgefragt)."
+      tags: always
+
+  roles:
+    - role: system
+      tags: [system]
+    - role: packages
+      tags: [packages]
+    - role: aur
+      tags: [aur]
+    - role: gpu
+      tags: [gpu]
+      when: sarch_gpu in ['amd', 'nvidia']
+    - role: dotfiles
+      tags: [dotfiles]
+    - role: personal
+      tags: [personal]

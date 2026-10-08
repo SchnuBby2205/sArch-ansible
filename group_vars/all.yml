@@ -1,0 +1,123 @@
+# ============================================================
+#  sArch – alle Einstellungen an einer Stelle
+#  (ersetzt configs/installConfigs/{programs,systemdeps,audiodeps,fonts,amd,nvidia})
+#  Brace-Expansion wie mesa{,-utils} gibt es hier nicht -> Paketnamen ausgeschrieben.
+# ============================================================
+
+# Rechner-spezifisches (GPU, Platten, Mounts, Firefox) steht in host_vars/pc.yml bzw. host_vars/vm.yml.
+
+# --- Allgemein ----------------------------------------------
+sarch_user: "{{ ansible_user_id }}"
+sarch_home: "{{ ansible_env.HOME }}"
+
+# Das sArch-Repo (Configs, bin, Themes, Fonts) wird hierhin geklont.
+sarch_repo_url: https://github.com/SchnuBby2205/sArch.git
+sarch_repo: "{{ sarch_home }}/sArch"
+
+sarch_kernel: linux-lts          # für die passenden -headers (nvidia-dkms)
+
+# Systemupdate (pacman -Syu + AUR). Wird von "./sarch.sh <pc|vm> update" auf true gesetzt.
+sarch_upgrade: false
+
+# --- pacman --------------------------------------------------
+sarch_parallel_downloads: 5
+sarch_reflector:
+  enabled: false                 # true = Mirrorlist neu erzeugen
+  country: Germany
+
+# --- Pakete (offizielle Repos) -------------------------------
+sarch_systemdeps:
+  - hyprland
+  - xdg-desktop-portal-hyprland
+  - xdg-desktop-portal-gtk
+  - sddm
+  - awww
+  - polkit-gnome
+  - xdg-user-dirs
+  - imagemagick
+  - matugen
+  - rofi
+  - qt5-wayland
+  - qt5ct
+  - qt6-wayland
+  - qt6ct
+  - dunst
+  - libnotify
+  - wl-clipboard
+
+sarch_audiodeps:
+  - pipewire
+  - pipewire-alsa
+  - pipewire-audio
+  - pipewire-pulse
+  - gst-plugin-pipewire
+  - wireplumber
+  - pavucontrol
+  - pamixer
+  - alsa-utils
+
+sarch_programs:
+  - firefox
+  - kitty
+  - dolphin
+  - ark
+  - unzip
+  - fzf
+  - zsh
+  - lutris
+  - steam
+  - teamspeak3
+  - lazygit
+  - git
+  - btop
+  - code
+  - neovim
+  - ripgrep
+  - yazi
+
+sarch_fonts:
+  - ttf-jetbrains-mono-nerd
+
+# Für bin/Settings/settings_mask.py (GTK4/libadwaita) – fehlte bisher in den Listen
+sarch_extra_packages:
+  - python-gobject
+  - libadwaita
+
+# --- AUR (via yay) -------------------------------------------
+sarch_aur_packages:
+  - python-pywalfox
+  - grimblast
+  - dxvk-bin
+
+# --- GPU -----------------------------------------------------
+sarch_gpu_packages:
+  amd:
+    - mesa
+    - mesa-utils
+    - lib32-mesa
+    - vulkan-radeon
+    - lib32-vulkan-radeon
+    - vulkan-icd-loader
+    - lib32-vulkan-icd-loader
+    - libva-utils
+    # libva-mesa-driver ist inzwischen Teil von "mesa"
+  nvidia:
+    - "{{ sarch_kernel }}-headers"   # nötig für nvidia-dkms
+    - nvidia-dkms
+    - nvidia-utils
+    - nvidia-settings
+    - lib32-nvidia-utils
+    - vulkan-icd-loader
+    - lib32-vulkan-icd-loader
+
+# --- Dotfiles ------------------------------------------------
+# link = Symlinks ins Repo (Änderungen landen direkt im Git-Repo)
+# copy = einmalige Kopie (wie das alte install.sh, nur ohne mv)
+sarch_dotfiles_mode: link
+sarch_wallpaper_repo: https://github.com/mylinuxforwork/wallpaper.git
+sarch_wallpaper_dir: "{{ sarch_home }}/Bilder/Wallpapers"
+
+# --- Services ------------------------------------------------
+sarch_services:
+  - sddm
+  - NetworkManager

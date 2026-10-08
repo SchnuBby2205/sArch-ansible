@@ -1,0 +1,92 @@
+# Klont das sArch-Repo und verlinkt (oder kopiert) Configs, bin, Themes und Fonts.
+
+- name: sArch-Repo klonen (Configs, bin, Themes, Fonts)
+  ansible.builtin.git:
+    repo: "{{ sarch_repo_url }}"
+    dest: "{{ sarch_repo }}"
+    update: false            # Aktualisieren macht "./sarch.sh <pc|vm> update" per git pull
+
+- name: Config-Ordner im Repo finden (ohne installConfigs)
+  ansible.builtin.find:
+    paths: "{{ sarch_repo }}/configs"
+    file_type: directory
+    recurse: false
+    excludes: [installConfigs]
+  register: sarch_config_dirs
+
+- name: Liste der Ziele zusammenstellen
+  ansible.builtin.set_fact:
+    sarch_dotfile_targets: |
+      {% set t = [] %}
+      {% for d in sarch_config_dirs.files | map(attribute='path') | sort %}
+      {%   set _ = t.append({'src': d, 'dest': sarch_home ~ '/.config/' ~ (d | basename)}) %}
+      {% endfor %}
+      {% set _ = t.append({'src': sarch_repo ~ '/bin',            'dest': sarch_home ~ '/.config/sArch/bin'}) %}
+      {% set _ = t.append({'src': sarch_repo ~ '/themes/Matugen', 'dest': sarch_home ~ '/.themes/Matugen'}) %}
+      {{ t }}
+
+- name: Elternordner anlegen
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ sarch_home }}/.config"
+    - "{{ sarch_home }}/.config/sArch"
+    - "{{ sarch_home }}/.themes"
+    - "{{ sarch_home }}/.local/share/fonts"
+
+- name: Vorhandene Ziele prüfen
+  ansible.builtin.stat:
+    path: "{{ item.dest }}"
+    follow: false
+  loop: "{{ sarch_dotfile_targets }}"
+  loop_control: { label: "{{ item.dest }}" }
+  register: sarch_dest_stat
+
+- name: Bestehende echte Ordner sichern (*.bak-<Zeitstempel>)
+  when:
+    - sarch_dotfiles_mode == 'link'
+    - item.stat.exists
+    - not item.stat.islnk
+  ansible.builtin.command:
+    cmd: "mv '{{ item.item.dest }}' '{{ item.item.dest }}.bak-{{ ansible_date_time.epoch }}'"
+  loop: "{{ sarch_dest_stat.results }}"
+  loop_control: { label: "{{ item.item.dest }}" }
+  changed_when: true
+
+- name: Configs verlinken
+  when: sarch_dotfiles_mode == 'link'
+  ansible.builtin.file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+    force: true
+  loop: "{{ sarch_dotfile_targets }}"
+  loop_control: { label: "{{ item.dest }} -> {{ item.src }}" }
+
+- name: Configs kopieren
+  when: sarch_dotfiles_mode == 'copy'
+  ansible.builtin.copy:
+    src: "{{ item.src }}/"
+    dest: "{{ item.dest }}/"
+    remote_src: true
+    mode: preserve
+  loop: "{{ sarch_dotfile_targets }}"
+  loop_control: { label: "{{ item.dest }}" }
+
+- name: Fonts aus dem Repo kopieren
+  ansible.builtin.copy:
+    src: "{{ sarch_repo }}/fonts/"
+    dest: "{{ sarch_home }}/.local/share/fonts/sArch/"
+    remote_src: true
+    mode: "0644"
+  notify: Font-Cache aktualisieren
+
+- name: Wallpaper klonen
+  ansible.builtin.git:
+    repo: "{{ sarch_wallpaper_repo }}"
+    dest: "{{ sarch_wallpaper_dir }}"
+    depth: 1
+    update: false
+  notify: Wallpaper-Thumbnails erzeugen

@@ -1,0 +1,181 @@
+# Ersetzt das auskommentierte installBackup(). Einstellungen: sarch_personal in host_vars/<pc|vm>.yml
+
+- name: Swap-Partition in fstab eintragen
+  when: sarch_personal.swap is not none
+  become: true
+  ansible.posix.mount:
+    src: "{{ sarch_personal.swap }}"
+    path: none
+    fstype: swap
+    opts: defaults
+    state: present
+  notify: Swap aktivieren
+
+- name: Zusätzliche Laufwerke einhängen (fstab)
+  become: true
+  ansible.posix.mount:
+    src: "{{ item.src }}"
+    path: "{{ item.path }}"
+    fstype: "{{ item.fstype | default('ext4') }}"
+    opts: "{{ item.opts | default('rw,relatime') }}"
+    passno: "1"
+    state: mounted
+  loop: "{{ sarch_personal.mounts }}"
+
+- name: SDDM-Autologin
+  when: sarch_personal.sddm_autologin | bool
+  become: true
+  ansible.builtin.template:
+    src: autologin.conf.j2
+    dest: /etc/sddm.conf.d/autologin.conf
+    mode: "0644"
+
+- name: GRUB-Timeout setzen
+  when: sarch_personal.grub_timeout is not none
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_TIMEOUT='
+    line: "GRUB_TIMEOUT={{ sarch_personal.grub_timeout }}"
+  notify: GRUB-Config neu erzeugen
+
+- name: Ziele der Backup-Links prüfen
+  ansible.builtin.stat:
+    path: "{{ item.dest | replace('~', sarch_home) }}"
+    follow: false
+  loop: "{{ sarch_personal.links }}"
+  loop_control: { label: "{{ item.dest }}" }
+  register: sarch_link_stat
+
+- name: Vorhandene echte Dateien/Ordner sichern (*.bak-<Zeitstempel>)
+  when: item.stat.exists and not item.stat.islnk
+  ansible.builtin.command:
+    cmd: "mv '{{ item.stat.path }}' '{{ item.stat.path }}.bak-{{ ansible_date_time.epoch }}'"
+  loop: "{{ sarch_link_stat.results }}"
+  loop_control: { label: "{{ item.item.dest }}" }
+  changed_when: true
+
+- name: Elternordner der Backup-Links anlegen
+  ansible.builtin.file:
+    path: "{{ item.dest | replace('~', sarch_home) | dirname }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ sarch_personal.links }}"
+  loop_control: { label: "{{ item.dest }}" }
+
+- name: Backup-Dateien verlinken
+  ansible.builtin.file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest | replace('~', sarch_home) }}"
+    state: link
+    force: true
+  loop: "{{ sarch_personal.links }}"
+  loop_control: { label: "{{ item.dest }} -> {{ item.src }}" }
+
+# --- Firefox-Profil ------------------------------------------
+# Verlinkt das Backup-Profil nach ~/.mozilla/firefox und trägt es in profiles.ini als
+# Standard ein. Firefox darf dabei nicht laufen.
+- name: Firefox-Profil einrichten
+  when: sarch_personal.firefox.profile is not none
+  vars:
+    ff_dir: "{{ sarch_home }}/.mozilla/firefox"
+    ff: "{{ sarch_personal.firefox }}"
+  block:
+    - name: Firefox-Ordner anlegen
+      ansible.builtin.file:
+        path: "{{ ff_dir }}"
+        state: directory
+        mode: "0700"
+
+    - name: Ziel des Profil-Links prüfen
+      ansible.builtin.stat:
+        path: "{{ ff_dir }}/{{ ff.name }}"
+        follow: false
+      register: sarch_ff_stat
+
+    - name: Vorhandenen echten Profilordner sichern
+      when: sarch_ff_stat.stat.exists and not sarch_ff_stat.stat.islnk
+      ansible.builtin.command:
+        cmd: "mv '{{ ff_dir }}/{{ ff.name }}' '{{ ff_dir }}/{{ ff.name }}.bak-{{ ansible_date_time.epoch }}'"
+      changed_when: true
+
+    - name: Profil vom Backup-Laufwerk verlinken
+      ansible.builtin.file:
+        src: "{{ ff.profile }}"
+        dest: "{{ ff_dir }}/{{ ff.name }}"
+        state: link
+        force: true
+
+    # --- Install-Kennung(en) ermitteln ---------------------------
+    # Firefox bindet Profile pro Installation über eine Kennung (Hash des Installationspfads).
+    # Wir lesen sie aus installs.ini. Gibt es noch keine, wird Firefox einmal headless gestartet,
+    # damit er sie selbst anlegt. Zusätzlich werden fest hinterlegte Kennungen verwendet.
+    - name: Vorhandene Install-Kennungen lesen
+      ansible.builtin.shell: "grep -oP '^\\[\\K[0-9A-F]{16}(?=\\])' '{{ ff_dir }}/installs.ini' || true"
+      register: sarch_ff_hashes_before
+      changed_when: false
+
+    - name: Firefox einmal headless starten, damit er seine Kennung anlegt
+      when: sarch_ff_hashes_before.stdout_lines | length == 0
+      ansible.builtin.command:
+        cmd: timeout 60 firefox --headless --screenshot /tmp/sarch-ff-init.png about:blank
+      environment:
+        HOME: "{{ sarch_home }}"
+      register: sarch_ff_init
+      changed_when: true
+      failed_when: false
+
+    - name: Install-Kennungen erneut lesen
+      ansible.builtin.shell: "grep -oP '^\\[\\K[0-9A-F]{16}(?=\\])' '{{ ff_dir }}/installs.ini' || true"
+      register: sarch_ff_hashes
+      changed_when: false
+
+    - name: Kennungen zusammenführen (gefunden + hinterlegt)
+      ansible.builtin.set_fact:
+        sarch_ff_install_hashes: >-
+          {{ (sarch_ff_hashes.stdout_lines
+              + ([ff.install_hash] if ff.install_hash is string else (ff.install_hash | default([], true))))
+             | map('upper') | unique | list }}
+
+    - name: Gefundene Kennungen anzeigen (zum Eintragen in host_vars/pc.yml)
+      ansible.builtin.debug:
+        msg: "Firefox Install-Kennung(en): {{ sarch_ff_install_hashes | join(', ') }}"
+
+    - name: profiles.ini – Profil als Standard eintragen
+      community.general.ini_file:
+        path: "{{ ff_dir }}/profiles.ini"
+        section: "{{ item.section }}"
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+        no_extra_spaces: true
+        mode: "0644"
+      loop:
+        - { section: General,  option: StartWithLastProfile, value: "1" }
+        - { section: General,  option: Version,              value: "2" }
+        - { section: Profile0, option: Name,                 value: default-release }
+        - { section: Profile0, option: IsRelative,           value: "1" }
+        - { section: Profile0, option: Path,                 value: "{{ ff.name }}" }
+        - { section: Profile0, option: Default,              value: "1" }
+      loop_control: { label: "[{{ item.section }}] {{ item.option }}={{ item.value }}" }
+
+    - name: profiles.ini – Profil an jede Firefox-Installation binden
+      community.general.ini_file:
+        path: "{{ ff_dir }}/profiles.ini"
+        section: "Install{{ item.0 }}"
+        option: "{{ item.1 }}"
+        value: "{{ ff.name if item.1 == 'Default' else '1' }}"
+        no_extra_spaces: true
+        mode: "0644"
+      loop: "{{ sarch_ff_install_hashes | product(['Default', 'Locked']) | list }}"
+      loop_control: { label: "[Install{{ item.0 }}] {{ item.1 }}" }
+
+    - name: installs.ini – Profil an jede Firefox-Installation binden
+      community.general.ini_file:
+        path: "{{ ff_dir }}/installs.ini"
+        section: "{{ item.0 }}"
+        option: "{{ item.1 }}"
+        value: "{{ ff.name if item.1 == 'Default' else '1' }}"
+        no_extra_spaces: true
+        mode: "0644"
+      loop: "{{ sarch_ff_install_hashes | product(['Default', 'Locked']) | list }}"
+      loop_control: { label: "[{{ item.0 }}] {{ item.1 }}" }

@@ -1,0 +1,26 @@
+# ============================================================
+#  Mein Rechner. Gerätenamen mit "lsblk -f" prüfen, am besten UUID=... eintragen.
+# ============================================================
+sarch_gpu: amd                    # amd | nvidia | none
+
+sarch_personal:
+  swap: /dev/nvme0n1p2            # Swap-Partition -> fstab (null = überspringen)
+  mounts:
+    - { src: /dev/nvme0n1p4, path: /programmieren, fstype: ext4 }
+    - { src: /dev/nvme0n1p6, path: /spiele,        fstype: ext4 }
+  sddm_autologin: true
+  sddm_session: hyprland
+  grub_timeout: 0                 # null = GRUB nicht anfassen
+  # Symlinks aufs Backup-Laufwerk. Vorhandene echte Dateien werden als *.bak-<Zeit> gesichert.
+  links:
+    - { src: /programmieren/backups/.gitconfig,            dest: "~/.gitconfig" }
+    - { src: /programmieren/backups/.git-credentials,      dest: "~/.git-credentials" }
+    - { src: /programmieren/backups/.zsh_history,          dest: "~/.zsh_history" }
+    - { src: /programmieren/backups/.ts3client,            dest: "~/.ts3client" }
+    - { src: /programmieren/backups/.local/share/lutris,   dest: "~/.local/share/lutris" }
+  firefox:
+    profile: /programmieren/backups/FireFox/3665cjzf.default-release   # null = überspringen
+    name: sarch.default-release
+    # Wird automatisch ermittelt. Was der Lauf als "Firefox Install-Kennung(en)" ausgibt,
+    # hier eintragen, dann ist es bei Neuinstallationen sofort da. Einzelwert oder Liste.
+    install_hash: []

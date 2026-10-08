@@ -1,0 +1,45 @@
+# Muster aus der kewlfft.aur-Doku: eigener Build-User, der nur pacman ohne Passwort darf.
+- name: Build-User "aur_builder" anlegen
+  become: true
+  ansible.builtin.user:
+    name: aur_builder
+    create_home: true
+    group: wheel
+
+- name: aur_builder darf pacman ohne Passwort ausführen
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/11-install-aur_builder
+    content: "aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman\n"
+    mode: "0440"
+    validate: visudo -cf %s
+
+- name: Build-Abhängigkeiten installieren
+  become: true
+  community.general.pacman:
+    name: [base-devel, git]
+    state: present
+
+- name: yay installieren (makepkg)
+  become: true
+  become_user: aur_builder
+  kewlfft.aur.aur:
+    name: yay
+    use: makepkg
+    state: present
+
+- name: AUR-Pakete installieren
+  become: true
+  become_user: aur_builder
+  kewlfft.aur.aur:
+    name: "{{ sarch_aur_packages }}"
+    use: yay
+    state: present
+
+- name: Systemupdate (AUR-Pakete)
+  when: sarch_upgrade | bool
+  become: true
+  become_user: aur_builder
+  kewlfft.aur.aur:
+    upgrade: true
+    use: yay
