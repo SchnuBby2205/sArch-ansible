@@ -65,13 +65,24 @@
   loop: "{{ sarch_dotfile_targets }}"
   loop_control: { label: "{{ item.dest }} -> {{ item.src }}" }
 
-- name: Configs kopieren
+- name: Alte Symlinks entfernen (Umstieg von link auf copy)
+  when:
+    - sarch_dotfiles_mode == 'copy'
+    - item.stat.islnk | default(false)
+  ansible.builtin.file:
+    path: "{{ item.item.dest }}"
+    state: absent
+  loop: "{{ sarch_dest_stat.results }}"
+  loop_control: { label: "{{ item.item.dest }}" }
+
+- name: Configs kopieren (nur fehlende Dateien, lokale Änderungen bleiben)
   when: sarch_dotfiles_mode == 'copy'
   ansible.builtin.copy:
     src: "{{ item.src }}/"
     dest: "{{ item.dest }}/"
     remote_src: true
     mode: preserve
+    force: false
   loop: "{{ sarch_dotfile_targets }}"
   loop_control: { label: "{{ item.dest }}" }
 

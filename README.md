@@ -66,9 +66,14 @@ Was danach noch übrig bleibt:
 
 ## Hinweise
 
-- **Configs sind Symlinks** nach `~/sArch/configs/…`. Änderungen landen direkt im sArch-Repo.
-  Dazu gehören auch die Farbdateien, die matugen beim Wallpaper-Wechsel schreibt.
-  `sarch_dotfiles_mode: copy` kopiert stattdessen.
+- **Configs: `link` oder `copy`** (`sarch_dotfiles_mode` in `group_vars/all.yml`, oder pro Rechner in `host_vars/*.yml`):
+  - `link` (Standard): Symlinks nach `~/sArch/configs/…`. Änderungen landen direkt im sArch-Repo,
+    auch die Farbdateien von matugen. `git pull` wirkt sofort.
+  - `copy`: echte Kopien in `~/.config`. Das Repo bleibt sauber, und eigene Änderungen werden nie
+    überschrieben. Es werden nur fehlende Dateien kopiert. Geänderte Dateien aus dem Repo
+    musst du bei Bedarf selbst übernehmen, z. B. mit
+    `cp ~/sArch/configs/kitty/kitty.conf ~/.config/kitty/`.
+  - Beim Umstieg von `link` auf `copy` ersetzt der nächste Lauf die Symlinks durch Kopien.
 - **Firefox-Profil (nur PC):** Das Profil vom Backup-Laufwerk wird verlinkt und als Standard
   eingetragen. Die Install-Kennung ermittelt Ansible selbst. Notfalls startet es Firefox dafür
   einmal kurz unsichtbar. Die Kennung wird im Lauf angezeigt. Trägst du sie in
