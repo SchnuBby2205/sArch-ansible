@@ -74,6 +74,17 @@ Was danach noch übrig bleibt:
     musst du bei Bedarf selbst übernehmen, z. B. mit
     `cp ~/sArch/configs/kitty/kitty.conf ~/.config/kitty/`.
   - Beim Umstieg von `link` auf `copy` ersetzt der nächste Lauf die Symlinks durch Kopien.
+- **matugen-Farbdateien ausblenden** (nur `link`, Standard an: `sarch_ignore_matugen_changes`):
+  Ansible liest die `output_path`-Einträge aus `configs/matugen/config.toml` und markiert die
+  passenden Dateien im sArch-Repo mit `git update-index --skip-worktree`. matugen schreibt sie
+  weiter, aber `git status` zeigt nur noch deine echten Änderungen. Neue Ausgabedateien in der
+  config.toml werden beim nächsten Lauf automatisch mit erfasst.
+  - Neue Standardfarben bewusst committen:
+    `git -C ~/sArch update-index --no-skip-worktree configs/kitty/colors.conf`,
+    dann normal `git add` und `commit`.
+  - Ändert sich eine dieser Dateien im Remote-Repo, bricht `git pull` ab. `sarch.sh update`
+    meldet das und macht mit dem lokalen Stand weiter. Lösung: Datei wie oben wieder
+    einblenden, `git checkout -- <datei>`, dann `git pull`.
 - **Firefox-Profil (nur PC):** Das Profil vom Backup-Laufwerk wird verlinkt und als Standard
   eingetragen. Die Install-Kennung ermittelt Ansible selbst. Notfalls startet es Firefox dafür
   einmal kurz unsichtbar. Die Kennung wird im Lauf angezeigt. Trägst du sie in

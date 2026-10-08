@@ -117,6 +117,10 @@ sarch_gpu_packages:
 #        die in ~/.config noch fehlen. Eigene Änderungen werden nie überschrieben.
 #        Geänderte Dateien aus dem Repo kommen dann aber auch nicht automatisch an.
 sarch_dotfiles_mode: link
+
+# Nur link-Modus: von matugen erzeugte Farbdateien (output_path in configs/matugen/config.toml)
+# lokal in Git ausblenden, damit "git status" im sArch-Repo sauber bleibt.
+sarch_ignore_matugen_changes: true
 sarch_wallpaper_repo: https://github.com/mylinuxforwork/wallpaper.git
 sarch_wallpaper_dir: "{{ sarch_home }}/Bilder/Wallpapers"
 

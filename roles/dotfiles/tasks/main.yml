@@ -86,6 +86,48 @@
   loop: "{{ sarch_dotfile_targets }}"
   loop_control: { label: "{{ item.dest }}" }
 
+# --- matugen-Farbdateien im Repo ausblenden (nur link-Modus) -----------
+# Liest die output_path-Einträge aus configs/matugen/config.toml und markiert die passenden
+# Repo-Dateien mit "git update-index --skip-worktree". matugen kann sie weiter überschreiben,
+# Git zeigt die Änderungen aber nicht mehr an (git status bleibt sauber).
+- name: matugen-Farbdateien in Git ausblenden
+  when:
+    - sarch_dotfiles_mode == 'link'
+    - sarch_ignore_matugen_changes | bool
+  block:
+    - name: matugen-Konfiguration lesen
+      ansible.builtin.slurp:
+        src: "{{ sarch_repo }}/configs/matugen/config.toml"
+      register: sarch_matugen_cfg
+
+    - name: Ausgabedateien auf Repo-Pfade abbilden
+      ansible.builtin.set_fact:
+        sarch_matugen_repo_files: >-
+          {{ sarch_matugen_cfg.content | b64decode
+             | regex_findall("(?m)^[ ]*output_path[ ]*=[ ]*['\"]([^'\"]+)['\"]")
+             | map('regex_replace', '^~/[.]config/', 'configs/')
+             | map('regex_replace', '^~/[.]themes/Matugen/', 'themes/Matugen/')
+             | select('match', '^(configs|themes)/')
+             | list }}
+
+    - name: Dateien als skip-worktree markieren
+      ansible.builtin.shell:
+        cmd: |
+          set -eo pipefail
+          cd {{ sarch_repo | quote }}
+          for f in {{ sarch_matugen_repo_files | map('quote') | join(' ') }}; do
+            if git ls-files --error-unmatch -- "$f" >/dev/null 2>&1; then
+              git ls-files -v -- "$f" | grep -q '^S' && continue
+              git update-index --skip-worktree -- "$f" && echo "skip-worktree: $f"
+            else
+              grep -qxF "/$f" .git/info/exclude 2>/dev/null && continue
+              echo "/$f" >> .git/info/exclude && echo "exclude: $f"
+            fi
+          done
+        executable: /bin/bash
+      register: sarch_matugen_skip
+      changed_when: sarch_matugen_skip.stdout | length > 0
+
 - name: Fonts aus dem Repo kopieren
   ansible.builtin.copy:
     src: "{{ sarch_repo }}/fonts/"
