@@ -1,10 +1,4 @@
-# Klont das sArch-Repo und verlinkt (oder kopiert) Configs, bin, Themes und Fonts.
-
-- name: sArch-Repo klonen (Configs, bin, Themes, Fonts)
-  ansible.builtin.git:
-    repo: "{{ sarch_repo_url }}"
-    dest: "{{ sarch_repo }}"
-    update: false            # Aktualisieren macht "./sarch.sh <pc|vm> update" per git pull
+# Verlinkt (oder kopiert) configs/, bin/, themes/Matugen und fonts/ aus diesem Repo.
 
 - name: Config-Ordner im Repo finden (ohne installConfigs)
   ansible.builtin.find:

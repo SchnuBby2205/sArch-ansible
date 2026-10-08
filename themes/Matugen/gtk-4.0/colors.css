@@ -1,0 +1,26 @@
+/*
+* GTK Colors
+* Generated with Matugen
+*/
+notebook> header.top > tabs > tab:checked
+{
+    box-shadow: inset 0 -4px #b2c5ff;
+}
+scale > trough > highlight {
+    background: #c0c6dd;
+}
+scale > trough > slider {
+    background-color: #c0c6dd;
+}
+scale:hover > trough {
+    background: #c0c6dd;
+}
+scale:hover > trough > highlight {
+    background: #b2c5ff;
+}
+scale:hover > trough > slider {
+    background: #b2c5ff;
+}
+progressbar > trough > progress {
+    background-color: #b2c5ff;
+}

@@ -10,9 +10,8 @@
 sarch_user: "{{ ansible_user_id }}"
 sarch_home: "{{ ansible_env.HOME }}"
 
-# Das sArch-Repo (Configs, bin, Themes, Fonts) wird hierhin geklont.
-sarch_repo_url: https://github.com/SchnuBby2205/sArch.git
-sarch_repo: "{{ sarch_home }}/sArch"
+# configs/, bin/, themes/ und fonts/ liegen in diesem Repo selbst.
+sarch_repo: "{{ playbook_dir }}"
 
 sarch_kernel: linux-lts          # für die passenden -headers (nvidia-dkms)
 
@@ -111,7 +110,7 @@ sarch_gpu_packages:
     - lib32-vulkan-icd-loader
 
 # --- Dotfiles ------------------------------------------------
-# link = Symlinks ins Repo: Änderungen in ~/.config landen direkt im sArch-Repo,
+# link = Symlinks ins Repo: Änderungen in ~/.config landen direkt in diesem Repo,
 #        Repo-Updates (git pull) wirken sofort.
 # copy = echte Kopien in ~/.config: Das Repo bleibt sauber. Es werden nur Dateien kopiert,
 #        die in ~/.config noch fehlen. Eigene Änderungen werden nie überschrieben.
@@ -119,7 +118,7 @@ sarch_gpu_packages:
 sarch_dotfiles_mode: link
 
 # Nur link-Modus: von matugen erzeugte Farbdateien (output_path in configs/matugen/config.toml)
-# lokal in Git ausblenden, damit "git status" im sArch-Repo sauber bleibt.
+# lokal in Git ausblenden, damit "git status" in diesem Repo sauber bleibt.
 sarch_ignore_matugen_changes: true
 sarch_wallpaper_repo: https://github.com/mylinuxforwork/wallpaper.git
 sarch_wallpaper_dir: "{{ sarch_home }}/Bilder/Wallpapers"

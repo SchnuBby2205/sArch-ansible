@@ -38,10 +38,8 @@ case "${1:-}" in
     extra=()
     if [[ "${1:-}" == "update" ]]; then
       shift
-      echo ">> git pull (sArch-ansible und sArch) ..."
-      git pull --ff-only || echo "!! sArch-ansible: git pull nicht möglich, mache mit lokalem Stand weiter."
-      [[ -d "$HOME/sArch/.git" ]] && { git -C "$HOME/sArch" pull --ff-only \
-        || echo "!! sArch: git pull nicht möglich (lokale Änderungen?), mache mit lokalem Stand weiter."; }
+      echo ">> git pull ..."
+      git pull --ff-only || echo "!! git pull nicht möglich (lokale Änderungen?), mache mit lokalem Stand weiter."
       extra+=(-e sarch_upgrade=true)
     fi
     install_ansible

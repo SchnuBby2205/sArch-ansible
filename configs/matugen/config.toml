@@ -1,0 +1,85 @@
+# OLD SYNTAX
+#[config.wallpaper]
+#command="awww"
+#arguments=["img", "--transition-type", "center", "--transition-step", "15", "--transition-fps", "60"]
+#set=true
+
+# NEW SYNTAX
+[config.wallpaper]
+command="awww img --transition-type center --transition-step 15 --transition-fps 60 {{ image }}"
+set=true
+
+[templates.hyprland]
+input_path = '~/.config/matugen/templates/hyprland-colors.lua'
+#output_path = '~/.config/hypr/colors.conf'
+output_path = '~/.config/hypr/colors.lua'
+post_hook = 'hyprctl reload'
+
+[templates.kitty]
+input_path = '~/.config/matugen/templates/kitty-colors.conf'
+output_path = '~/.config/kitty/colors.conf'
+post_hook = 'pkill -SIGUSR1 kitty'
+
+[templates.rofi]
+input_path = '~/.config/matugen/templates/rofi-colors.rasi'
+output_path = '~/.config/rofi/colors.rasi'
+
+#[templates.rofipower]
+#input_path = '~/.config/matugen/templates/rofi-colors-power.rasi'
+#output_path = '~/.config/rofi/power.rasi'
+
+#[templates.rofilauncher]
+#input_path = '~/.config/matugen/templates/rofi-colors-launcher.rasi'
+#output_path = '~/.config/rofi/launcher.rasi'
+
+#[templates.rofivolume]
+#input_path = '~/.config/matugen/templates/rofi-colors-volume.rasi'
+#output_path = '~/.config/rofi/volume.rasi'
+
+[templates.pywalfox]
+input_path = '~/.config/matugen/templates/pywalfox-colors.json'
+output_path = '~/.cache/wal/colors.json'
+post_hook = 'pywalfox update'
+
+#[templates.myshell]
+#input_path = '~/.config/matugen/templates/myshell-colors.json'
+#output_path = '~/.config/quickshell/myShell/Configs/colors.json'
+
+[templates.kdeglobals]
+input_path = '~/.config/matugen/templates/kdeglobals'
+output_path = '~/.config/kdeglobals'
+
+[templates.qt5ct]
+input_path = '~/.config/matugen/templates/qtct-colors.conf'
+output_path = '~/.config/qt5ct/colors/matugen.conf'
+
+[templates.qt6ct]
+input_path = '~/.config/matugen/templates/qtct-colors.conf'
+output_path = '~/.config/qt6ct/colors/matugen.conf'
+post_hook = 'killall dolphin 2>/dev/null && sleep 0.3 && dolphin &'
+
+[templates.kdecolors]
+input_path = "~/.config/matugen/templates/kde.colors"
+output_path = '~/.local/share/color-schemes/MaterialYou.colors'
+
+[templates.gtk3-colors]
+input_path = '~/.config/matugen/templates/gtk-colors.css'
+output_path = '~/.themes/Matugen/gtk-3.0/colors.css'
+post_hook = 'gsettings set org.gnome.desktop.interface gtk-theme ""; gsettings set org.gnome.desktop.interface gtk-theme Matugen'
+
+[templates.gtk4-colors]
+input_path = '~/.config/matugen/templates/gtk-colors.css'
+output_path = '~/.themes/Matugen/gtk-4.0/colors.css'
+
+[templates.btop]
+input_path = '~/.config/matugen/templates/btop.theme'
+output_path = '~/.config/btop/themes/matugen.theme'
+
+[templates.dunst]
+input_path = '~/.config/matugen/templates/dunstrc.colors'
+output_path = '~/.config/dunst/dunstrc'
+post_hook = 'dunstctl reload'
+
+[templates.yazi]
+input_path = '~/.config/matugen/templates/yazi-theme.toml'
+output_path = '~/.config/yazi/theme.toml'

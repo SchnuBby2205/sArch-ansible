@@ -1,0 +1,19 @@
+[mgr]
+show_hidden = true
+sort_by = "natural"
+sort_dir_first = true
+
+[opener]
+edit = [
+  { run = 'nvim %s', block = true, desc = "nvim", for = "unix" },
+]
+lazygit = [
+  { run = 'lazygit -p %s1', block = true, desc = "lazygit", for = "unix" },
+]
+
+[open]
+prepend_rules = [
+  { url = "*/", use = [ "edit", "lazygit", "reveal" ] },
+]
+
+

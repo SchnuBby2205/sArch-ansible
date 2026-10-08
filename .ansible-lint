@@ -3,3 +3,8 @@ skip_list:
   - name[casing]                 # deutsche Tasknamen
   - latest[git]                  # Wallpaper-Repo bewusst nicht pinnen
   - yaml[commas]                 # Spalten-Ausrichtung in group_vars
+exclude_paths:
+  - configs/
+  - bin/
+  - themes/
+  - fonts/
