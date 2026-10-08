@@ -128,6 +128,7 @@
     dest: "{{ sarch_home }}/.local/share/fonts/sArch/"
     remote_src: true
     mode: "0644"
+    directory_mode: "0755"
   notify: Font-Cache aktualisieren
 
 - name: Wallpaper klonen
